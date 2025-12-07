@@ -1,0 +1,1 @@
+Inicjalizacja pierwszego repozytorium, zadania z terminalem i GIT'em.

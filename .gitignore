@@ -1,0 +1,12 @@
+# Ignoruj dane
+data/
+*.csv
+
+# Ignoruj modele
+models/
+
+# Ignoruj cache Pythona
+__pycache__/
+
+# Ignoruj checkpointy Jupyter
+.ipynb_checkpoints/

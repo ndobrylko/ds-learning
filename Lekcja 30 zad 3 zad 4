@@ -1,0 +1,201 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMkuC4Fp9zp8N5rD32TXrRO",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/ndobrylko/ds-learning/blob/main/Lekcja%2030%20zad%203%20zad%204\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "collapsed": true,
+        "id": "SIlHA4vaqx6Z",
+        "outputId": "df3d09ee-04fa-4b73-ced2-1b5702be2512"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "2.19.0\n"
+          ]
+        }
+      ],
+      "source": [
+        "import tensorflow as tf\n",
+        "print(tf.__version__)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "\n",
+        "Zad. 3 SeparableConv2D vs Conv2D\n",
+        "Zbuduj dwa modele (Conv2D vs SeparableConv2D) o identycznej architekturze. Porownaj liczbe parametrow. O ile SeparableConv2D jest mniejszy?<br>\n",
+        "Wymagania:<br>\n",
+        "Identyczna architektura (3 bloki)<br>\n",
+        "count_params() dla obu<br>\n",
+        "Oblicz recznie parametry jednej warstwy<br>"
+      ],
+      "metadata": {
+        "id": "CC9qDKlIrg0R"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Conv2D, SeparableConv2D, MaxPooling2D, Flatten, Dense\n",
+        "\n",
+        "input_shape = (64, 64, 3)\n",
+        "\n",
+        "# MODEL 1: Conv2D\n",
+        "model_conv = Sequential([\n",
+        "    Conv2D(32, (3,3), activation='relu', input_shape=input_shape),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    Conv2D(64, (3,3), activation='relu'),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    Conv2D(128, (3,3), activation='relu'),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    Flatten(),\n",
+        "    Dense(64, activation='relu'),\n",
+        "    Dense(10, activation='softmax')\n",
+        "])\n",
+        "\n",
+        "# MODEL 2: SeparableConv2D\n",
+        "model_sep = Sequential([\n",
+        "    SeparableConv2D(32, (3,3), activation='relu', input_shape=input_shape),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    SeparableConv2D(64, (3,3), activation='relu'),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    SeparableConv2D(128, (3,3), activation='relu'),\n",
+        "    MaxPooling2D((2,2)),\n",
+        "\n",
+        "    Flatten(),\n",
+        "    Dense(64, activation='relu'),\n",
+        "    Dense(10, activation='softmax')\n",
+        "])\n",
+        "\n",
+        "# Liczba parametrów\n",
+        "params_conv = model_conv.count_params()\n",
+        "params_sep = model_sep.count_params()\n",
+        "\n",
+        "print(\"Conv2D model params:\", params_conv)\n",
+        "print(\"SeparableConv2D model params:\", params_sep)\n",
+        "\n",
+        "reduction = params_conv - params_sep\n",
+        "percent_smaller = reduction / params_conv * 100\n",
+        "\n",
+        "print(\"Różnica parametrów:\", reduction)\n",
+        "print(f\"SeparableConv2D jest mniejszy o: {percent_smaller:.2f}%\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "63cQWvaUrRMg",
+        "outputId": "775e748b-5724-49b7-df42-400da06048b2"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Conv2D model params: 388874\n",
+            "SeparableConv2D model params: 307077\n",
+            "Różnica parametrów: 81797\n",
+            "SeparableConv2D jest mniejszy o: 21.03%\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Zadanie 4 -- Konwolucja 1x1 bottleneck\n",
+        "Zbuduj model z bottleneck (Conv2D 1x1 do redukcji kanalow) i bez. Porownaj parametry.<br>\n",
+        "Wymagania:<br>\n",
+        "Wejscie: (14, 14, 128)<br>\n",
+        "Bez bottleneck: Conv2D(256, 3x3)<br>\n",
+        "Z bottleneck: Conv2D(32, 1x1) -- Conv2D(32, 3x3) -- Conv2D(256, 1x1)<br>\n",
+        "Porownaj parametry<br>"
+      ],
+      "metadata": {
+        "id": "R763Es1er0Hs"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Input, Conv2D\n",
+        "\n",
+        "# model bez bottleneck\n",
+        "model_plain = Sequential([\n",
+        "    Input(shape=(14, 14, 128)),\n",
+        "    Conv2D(256, (3,3), padding='same')\n",
+        "])\n",
+        "\n",
+        "# model z bottleneck\n",
+        "model_bottleneck = Sequential([\n",
+        "    Input(shape=(14, 14, 128)),\n",
+        "    Conv2D(32, (1,1), padding='same'),\n",
+        "    Conv2D(32, (3,3), padding='same'),\n",
+        "    Conv2D(256, (1,1), padding='same')\n",
+        "])\n",
+        "\n",
+        "print(\"Bez bottleneck:\", model_plain.count_params())\n",
+        "print(\"Z bottleneck:\", model_bottleneck.count_params())"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qNl1AcTfsQtu",
+        "outputId": "f75bd981-6c29-4e32-bc2e-fc836f506491"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Bez bottleneck: 295168\n",
+            "Z bottleneck: 21824\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
